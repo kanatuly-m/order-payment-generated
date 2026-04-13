@@ -20,7 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PaymentService_ProcessPayment_FullMethodName = "/payment.PaymentService/ProcessPayment"
+	PaymentService_ProcessPayment_FullMethodName          = "/payment.PaymentService/ProcessPayment"
+	PaymentService_SubscribeToOrderUpdates_FullMethodName = "/payment.PaymentService/SubscribeToOrderUpdates"
 )
 
 // PaymentServiceClient is the client API for PaymentService service.
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentServiceClient interface {
 	ProcessPayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
+	SubscribeToOrderUpdates(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PaymentResponse], error)
 }
 
 type paymentServiceClient struct {
@@ -48,11 +50,31 @@ func (c *paymentServiceClient) ProcessPayment(ctx context.Context, in *PaymentRe
 	return out, nil
 }
 
+func (c *paymentServiceClient) SubscribeToOrderUpdates(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PaymentResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &PaymentService_ServiceDesc.Streams[0], PaymentService_SubscribeToOrderUpdates_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[PaymentRequest, PaymentResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PaymentService_SubscribeToOrderUpdatesClient = grpc.ServerStreamingClient[PaymentResponse]
+
 // PaymentServiceServer is the server API for PaymentService service.
 // All implementations must embed UnimplementedPaymentServiceServer
 // for forward compatibility.
 type PaymentServiceServer interface {
 	ProcessPayment(context.Context, *PaymentRequest) (*PaymentResponse, error)
+	SubscribeToOrderUpdates(*PaymentRequest, grpc.ServerStreamingServer[PaymentResponse]) error
 	mustEmbedUnimplementedPaymentServiceServer()
 }
 
@@ -65,6 +87,9 @@ type UnimplementedPaymentServiceServer struct{}
 
 func (UnimplementedPaymentServiceServer) ProcessPayment(context.Context, *PaymentRequest) (*PaymentResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ProcessPayment not implemented")
+}
+func (UnimplementedPaymentServiceServer) SubscribeToOrderUpdates(*PaymentRequest, grpc.ServerStreamingServer[PaymentResponse]) error {
+	return status.Error(codes.Unimplemented, "method SubscribeToOrderUpdates not implemented")
 }
 func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
 func (UnimplementedPaymentServiceServer) testEmbeddedByValue()                        {}
@@ -105,6 +130,17 @@ func _PaymentService_ProcessPayment_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PaymentService_SubscribeToOrderUpdates_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(PaymentRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PaymentServiceServer).SubscribeToOrderUpdates(m, &grpc.GenericServerStream[PaymentRequest, PaymentResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PaymentService_SubscribeToOrderUpdatesServer = grpc.ServerStreamingServer[PaymentResponse]
+
 // PaymentService_ServiceDesc is the grpc.ServiceDesc for PaymentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -117,6 +153,12 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PaymentService_ProcessPayment_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "SubscribeToOrderUpdates",
+			Handler:       _PaymentService_SubscribeToOrderUpdates_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "payment.proto",
 }

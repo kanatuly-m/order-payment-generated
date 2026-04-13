@@ -136,9 +136,10 @@ const file_payment_proto_rawDesc = "" +
 	"\x06amount\x18\x02 \x01(\x01R\x06amount\"E\n" +
 	"\x0fPaymentResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2U\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xa5\x01\n" +
 	"\x0ePaymentService\x12C\n" +
-	"\x0eProcessPayment\x12\x17.payment.PaymentRequest\x1a\x18.payment.PaymentResponseB?Z=github.com/kanatuly-m/order-payment-generated/payment;paymentb\x06proto3"
+	"\x0eProcessPayment\x12\x17.payment.PaymentRequest\x1a\x18.payment.PaymentResponse\x12N\n" +
+	"\x17SubscribeToOrderUpdates\x12\x17.payment.PaymentRequest\x1a\x18.payment.PaymentResponse0\x01B?Z=github.com/kanatuly-m/order-payment-generated/payment;paymentb\x06proto3"
 
 var (
 	file_payment_proto_rawDescOnce sync.Once
@@ -159,9 +160,11 @@ var file_payment_proto_goTypes = []any{
 }
 var file_payment_proto_depIdxs = []int32{
 	0, // 0: payment.PaymentService.ProcessPayment:input_type -> payment.PaymentRequest
-	1, // 1: payment.PaymentService.ProcessPayment:output_type -> payment.PaymentResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	0, // 1: payment.PaymentService.SubscribeToOrderUpdates:input_type -> payment.PaymentRequest
+	1, // 2: payment.PaymentService.ProcessPayment:output_type -> payment.PaymentResponse
+	1, // 3: payment.PaymentService.SubscribeToOrderUpdates:output_type -> payment.PaymentResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
